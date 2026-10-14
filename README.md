@@ -1,5 +1,5 @@
 # Next Chapter prototype
-Quick Access to our App: https://cde5311.vercel.app/
+Quick Access to our App: https://next-chapter-omega.vercel.app/
 
 A responsive React + TypeScript + Vite prototype based on the Next Chapter Figma flow. It includes all ten screens, both opportunity matching outcomes, and clickable navigation between the onboarding and support flows. Fonts and selected Figma photography are stored locally under `public/assets`.
 
