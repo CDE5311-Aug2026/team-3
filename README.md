@@ -1,21 +1,93 @@
-# Next Chapter prototype
-Quick Access to our App: https://next-chapter-omega.vercel.app/
+# Next Chapter — web prototype
 
-A responsive React + TypeScript + Vite prototype based on the Next Chapter Figma flow. It includes all ten screens, both opportunity matching outcomes, and clickable navigation between the onboarding and support flows. Fonts and selected Figma photography are stored locally under `public/assets`.
+Hi! This is **Next Chapter**. Quick access to our demo: https://next-chapter-omega.vercel.app/
 
-## Figma Link
-https://www.figma.com/design/LUxFUBSSOTlHjLod5a5L3x/Next-Chapter?node-id=0-1&t=T9gsPZ1VWe80uGEl-1
-<img width="402" height="654" alt="Microsoft Edge 2026-10-08 17 00 51" src="https://github.com/user-attachments/assets/7ef31f40-aa3b-4239-9e6f-943954bb9721" />
-<img width="401" height="655" alt="Microsoft Edge 2026-10-08 17 01 00" src="https://github.com/user-attachments/assets/c748ad99-577b-4e95-9a48-739823bc759f" />
+A runnable React + TypeScript + Vite recreation of the **Next Chapter** mobile app design
+(Figma file *Next-Chapter*, page **“Page 4 Job Transition”**).
 
+Next Chapter is an AI-powered career-transition companion for experienced people who have lost
+their professional direction (laid off, retiring, ready for a change). The prototype follows
+**Sarah, 48** — 20 years leading projects and teams in tech — as she rediscovers her strengths
+with **Joyy**, the AI coach, chooses to explore yoga teaching, and turns it into a 100-day plan.
 
-## Run locally
+## Run it
 
-```sh
-pnpm install
-pnpm dev
+```bash
+npm install
+npm run dev        # http://localhost:5173
 ```
 
-Use the screen selector to jump between screens. In the phone preview, use the buttons and bottom navigation to follow the journey. The screen adapts from a mobile full-screen view to a desktop phone preview with a journey index.
+Other scripts:
 
-To create a production build, run `pnpm build`.
+| Command | What it does |
+| --- | --- |
+| `npm run build` | Type-checks and builds a static site into `dist/` (relative paths, works on GitHub Pages or any static host). |
+| `npm run preview` | Serves the production build locally. |
+| `npm run fetch:assets` | Downloads the photos from Figma into `public/images/` (see below). |
+
+### Photos
+
+The photos in the Figma file are not committed here. Every image slot renders a soft,
+on-palette placeholder until the real file exists. To pull the originals from Figma:
+
+```bash
+FIGMA_TOKEN=<personal access token> npm run fetch:assets
+```
+
+Create the token in Figma → Settings → Security → *Personal access tokens* (read-only file
+content is enough). The script maps each slot to its Figma node in `scripts/fetch-figma-assets.mjs`.
+
+## Responsive behaviour
+
+- **Desktop / tablet (≥ 600 px):** the app is shown inside a 390 × 844 iPhone frame with the
+  Dynamic Island, status bar and home indicator — the same viewport as the Figma frames. On wide
+  screens (≥ 1000 px) a *prototype map* on the left jumps to any screen or overlay.
+- **Phones (< 600 px):** the prototype fills the real screen, drops the fake status bar / home
+  indicator and uses the device safe-area insets instead.
+- Each screen keeps the top bar and bottom tab bar fixed while the content scrolls, as in Figma.
+
+## Screens and flow
+
+| Route | Figma frame | Notes |
+| --- | --- | --- |
+| `/` | P1 - Welcome Page | “Discover My Next Chapter” opens **Meet Joyy** |
+| `/coach/start` | P2 - AI Coach Guiding | First-time chat, journey step 1, no tab bar |
+| `/strengths` | P3 - User Strength | Journey step 2 |
+| `/possibilities` | P4 | Journey step 3 — reached only from P3 and “Revisit My Possibilities” |
+| `/fit` | P5 | “Build My 100-Day Yoga Plan” opens **Plan ready** |
+| `/coach` | P2.2 - AI Coach | AI Coach tab |
+| `/discover` | P4.2 - Discover Your Next Steps | Discover tab once a path is chosen |
+| `/roadmap` | P6 - Roadmap | Long-term goal → milestones → next action |
+| `/community` | P7 - Community | Peer circles, human guide, RSVP |
+| `/community/my-day` | P7.2 - My Day | Schedule fed by Community, Discover and Roadmap |
+| `/me` | User Page | Avatar in the top bar |
+| `/messages` | P8 - Messages | 💬 in the top bar |
+| `/joyy` | Joyy Settings | From the ≡ drawer or Joyy’s profile |
+
+Overlays: settings drawer (≡ — text size, bold text and high contrast actually work), Meet Joyy,
+Joyy profile, Plan ready, and three *Add to My Day* sheets (gathering RSVP, guide chat, trial class).
+
+## Design system
+
+- **Colour** — tokens mirror the Figma variable collection *Next Chapter · Color*
+  (`src/styles/tokens.css`): Primary `#1E382B`, Secondary `#D9933B`, Tertiary `#995A4E`, Neutral `#232623`.
+- **Type** — Newsreader for headlines, Atkinson Hyperlegible Next for body and labels (bundled via Fontsource).
+- **Components** — top bar, bottom nav, journey steps, Joyy mascot/avatar, radar chart, pills, toggles and
+  cards in `src/components/`.
+
+## Project structure
+
+```
+src/
+  App.tsx              router, device frame, prototype map
+  routes.ts            route ↔ Figma frame map
+  context/             overlay + display-settings state
+  components/          shared UI (Chrome, Screen, Joyy, RadarChart, Icon, ui…)
+  overlays/            drawer, modals and bottom sheets
+  screens/             one file per Figma frame
+  data/content.ts      shared copy and chart data from Figma
+  styles/              tokens + global styles
+scripts/fetch-figma-assets.mjs
+```
+
+Sample people and messages illustrate the information structure only.

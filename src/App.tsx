@@ -1,88 +1,114 @@
-import { useState } from 'react'
-import { ArrowLeft, ArrowUp, Bell, BookOpen, CalendarDays, Check, ChevronDown, ChevronRight, Clock3, Compass, Heart, HelpCircle, Home, MapPin, MessageCircle, Mic, Search, Sparkles, Sun, Trophy, UserRound, Users, Volume2, X } from 'lucide-react'
-import AskAI from './AskAI'
+import { HashRouter, NavLink, Route, Routes, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
+import { AppProvider, useApp, type OverlayId } from './context/AppContext';
+import { OverlayHost } from './overlays/Overlays';
+import { R, SCREEN_MAP } from './routes';
+import { Welcome } from './screens/Welcome';
+import { Coach } from './screens/Coach';
+import { Strengths } from './screens/Strengths';
+import { Possibilities } from './screens/Possibilities';
+import { Fit } from './screens/Fit';
+import { Discover } from './screens/Discover';
+import { Roadmap } from './screens/Roadmap';
+import { Community } from './screens/Community';
+import { MyDay } from './screens/MyDay';
+import { Me } from './screens/Me';
+import { Messages } from './screens/Messages';
+import { JoyySettings } from './screens/JoyySettings';
 
-type Screen = 'welcome' | 'profile' | 'needs' | 'home' | 'pathways' | 'opportunities' | 'match' | 'no-match' | 'first-step' | 'plan' | 'ask' | 'inbox'
+const OVERLAY_LINKS: { label: string; id: OverlayId }[] = [
+  { label: 'Settings drawer (≡)', id: 'drawer' },
+  { label: 'Meet Joyy', id: 'meetJoyy' },
+  { label: 'Joyy profile', id: 'joyyProfile' },
+  { label: 'Plan ready', id: 'planReady' },
+  { label: 'RSVP → Add to My Day', id: 'rsvp' },
+  { label: 'Chat booked → Add to My Day', id: 'chatBooked' },
+  { label: 'Trial class → Add to My Day', id: 'trialClass' },
+];
 
-function App() {
-  const [screen, setScreen] = useState<Screen>('welcome')
-  const [selectedNeeds, setSelectedNeeds] = useState<string[]>(['Community'])
-  const [selectedAge, setSelectedAge] = useState('60–64')
-  const [activeTab, setActiveTab] = useState('Overview')
-  const [saved, setSaved] = useState(false)
-  const [toast, setToast] = useState('')
-  const [backScreen, setBackScreen] = useState<Screen>('home')
-  const next = (to: Screen) => { if (to === 'ask' && screen !== 'ask') setBackScreen(screen); setScreen(to); setToast('') }
-  const notify = (message: string) => { setToast(message); window.setTimeout(() => setToast(''), 2400) }
-  const toggleNeed = (n: string) => setSelectedNeeds(prev => prev.includes(n) ? prev.filter(x => x !== n) : prev.length < 2 ? [...prev, n] : prev)
-
-  return <main className="stage">
-    <div className="phone">
-      <div className="phone-screen">
-        <div className="status"><b>9:41</b><div className="status-icons"><span className="signal"><i/><i/><i/><i/></span><span className="wifi">◔</span><span className="battery"><i/></span></div></div>
-        {screen==='welcome'&&<Welcome next={next} notify={notify}/>}
-        {screen==='profile'&&<Profile next={next} selectedAge={selectedAge} setSelectedAge={setSelectedAge} notify={notify}/>}
-        {screen==='needs'&&<Needs next={next} selected={selectedNeeds} toggle={toggleNeed}/>}
-        {screen==='home'&&<HomeScreen next={next} notify={notify}/>}
-        {screen==='pathways'&&<Pathways next={next} saved={saved} setSaved={setSaved}/>}
-        {screen==='opportunities'&&<Opportunities next={next} saved={saved} setSaved={setSaved}/>}
-        {screen==='match'&&<Match next={next} notify={notify}/>}
-        {screen==='no-match'&&<NoMatch next={next} notify={notify}/>}
-        {screen==='first-step'&&<FirstStep next={next} notify={notify}/>}
-        {screen==='plan'&&<Plan next={next} activeTab={activeTab} setActiveTab={setActiveTab} notify={notify}/>}
-        {screen==='ask'&&<AskAI back={() => next(backScreen)} open={next} notify={notify}/>}
-        {screen==='inbox'&&<Inbox next={next}/>}
-        {toast&&<div className="toast"><Check size={15}/>{toast}</div>}
+/** Side panel shown on wide screens: jump to any Figma frame or overlay. */
+function PrototypeMap() {
+  const { openOverlay } = useApp();
+  return (
+    <aside className="proto-map" aria-label="Prototype map">
+      <div className="proto-brand">
+        <span className="proto-logo" aria-hidden>
+          <svg viewBox="0 0 32 32" width="28" height="28">
+            <rect width="32" height="32" rx="8" fill="#1E382B" />
+            <g fill="none" stroke="#CBEAD7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M16 25v-9" />
+              <path d="M16 16c0-4.4-3.2-7.6-8-7.6 0 4.4 3.2 7.6 8 7.6z" />
+              <path d="M16 14c0-3.9 2.7-7 7.6-7 0 3.9-2.7 7-7.6 7z" />
+            </g>
+          </svg>
+        </span>
+        <div>
+          <strong>Next Chapter</strong>
+          <span>Web prototype · from Figma</span>
+        </div>
       </div>
-    </div>
-  </main>
-}
-
-function Header({title,back}:{title:string,back:()=>void}) { return <div className="mobile-header"><button className="icon-button" onClick={back} aria-label="Back"><ArrowLeft size={20}/></button><span>{title}</span><span className="step-count">Step 1 of 2</span></div> }
-function HomeIndicator(){return <div className="home-indicator"><i/></div>}
-function Primary({children,onClick}:{children:React.ReactNode,onClick:()=>void}){return <button className="primary" onClick={onClick}>{children}</button>}
-function Secondary({children,onClick}:{children:React.ReactNode,onClick:()=>void}){return <button className="secondary" onClick={onClick}>{children}</button>}
-function AIChip({children='Ask Compass'}:{children?:React.ReactNode}){return <button className="ai-chip"><Sparkles size={14}/>{children}</button>}
-function Nav({active='Home',go}:{active?:string,go:(s:Screen)=>void}){return <div className="bottom-nav">{[['Home',Home,'home'],['Explore',Compass,'pathways'],['Ask AI',Sparkles,'ask'],['Inbox',MessageCircle,'inbox'],['Profile',UserRound,'profile']].map(([label,Icon,target])=><button key={label as string} className={active===label?'selected':''} onClick={()=>go(target as Screen)}><Icon size={18}/><span>{label as string}</span></button>)}</div>}
-function Welcome({next,notify}:{next:(s:Screen)=>void,notify:(s:string)=>void}){return <><div className="welcome-hero"><div className="hero-sun"/><div className="hero-art"><span/><span/><span/></div><div className="hero-glow"/></div><div className="welcome-content"><div className="welcome-logo"><span className="brandmark large"><Sparkles size={22}/></span><h1>Next Chapter</h1></div><p className="welcome-subtitle">Shape what comes next.</p><AIChip>AI-assisted · human supported</AIChip><div className="welcome-actions"><Primary onClick={()=>next('profile')}>Get Started</Primary><Secondary onClick={()=>next('profile')}>Sign In</Secondary></div><button className="text-link" onClick={()=>next('home')}>Explore as guest</button><div className="utility-links"><button onClick={()=>notify('Language preferences')}><span>◎</span>English</button><button onClick={()=>notify('Text size settings')}><span>Aa</span>Text size</button><button onClick={()=>notify('Help is on the way')}><HelpCircle size={16}/>Help</button></div></div><HomeIndicator/></>}
-function Profile({next,selectedAge,setSelectedAge,notify}:{next:(s:Screen)=>void,selectedAge:string,setSelectedAge:(a:string)=>void,notify:(s:string)=>void}){return <><Header title="About you" back={()=>next('welcome')}/><div className="mobile-scroll profile-content"><div className="title-row"><h2>About you</h2><AIChip>Fill by voice</AIChip></div><div className="profile-card"><div className="profile-identity"><div className="avatar"><img src="/assets/figma-photo-02.jpeg" alt="Lin Mei"/></div><button className="name-input" onClick={()=>notify('Profile details')}><span>Lin Mei</span><span>Edit</span></button></div><div className="age-options">{['55–59','60–64','65–69','70+'].map(a=><button className={selectedAge===a?'chosen':''} key={a} onClick={()=>setSelectedAge(a)}>{a}</button>)}</div><div className="two-fields"><button><MapPin size={16}/> Queenstown</button><button><span>⚑</span> Ex-admin</button></div></div><h3 className="section-title">Preferences</h3><div className="pref-grid"><div className="pref-card"><span className="pref-head">◎　Language</span><span>English　⌄</span></div><div className="pref-card"><span className="pref-head">Aa　Text size</span><div className="size-select"><button>A</button><button className="chosen">A</button><button>A</button></div></div><div className="pref-card"><span className="pref-head"><Volume2 size={16}/> Voice guide</span><button className="toggle" onClick={e=>e.currentTarget.classList.toggle('on')}><i/></button></div><div className="pref-card"><span className="pref-head"><Bell size={16}/> Reminders</span><button className="toggle on" onClick={e=>e.currentTarget.classList.toggle('on')}><i/></button></div></div><div className="privacy"><span className="check-square"><Check size={14}/></span><span>I agree to the privacy policy</span><button>Manage</button></div><Primary onClick={()=>next('needs')}>Save &amp; Continue</Primary></div><HomeIndicator/></>}
-function Needs({next,selected,toggle}:{next:(s:Screen)=>void,selected:string[],toggle:(n:string)=>void}){const needs=[['Health','✿','Gentle movement and wellbeing'],['Learning','▣','Discover something new'],['Community','♧','Meet people and belong'],['Purpose','✦','Share skills and experience']];return <><Header title="" back={()=>next('profile')}/><div className="mobile-scroll needs-content"><div className="progress"><i/><i/><i/><i/></div><h2>What matters to you now?</h2><div className="sub-row"><span>Pick up to two</span><AIChip>Shapes your picks</AIChip></div><div className="need-grid">{needs.map(([name,icon,desc])=><button key={name} className={`need-card ${selected.includes(name)?'selected':''}`} onClick={()=>toggle(name)}><span className="need-icon">{icon}</span>{selected.includes(name)&&<span className="need-check"><Check size={13}/></span>}<strong>{name}</strong><small>{desc}</small></button>)}</div><button className="talk-card"><span><Sparkles size={17}/></span><b>Not sure? Talk it through</b><ChevronRight size={16}/></button><Primary onClick={()=>next('home')}>Continue</Primary></div><HomeIndicator/></>}
-function HomeScreen({next,notify}:{next:(s:Screen)=>void,notify:(s:string)=>void}){return <><div className="mobile-scroll main-content"><div className="home-header"><div className="mini-avatar photo-avatar"><img src="/assets/figma-photo-02.jpeg" alt=""/></div><div className="greeting"><small>Good morning,</small><strong>Lin Mei</strong></div><div className="weather"><Sun size={16}/>29°</div><button className="round-button" onClick={()=>notify('You are all caught up')}><Bell size={18}/><i/></button></div><div className="feature-card"><div className="garden-photo"><span>GROW TOGETHER</span></div><div className="feature-body"><h3>Community Garden Workshop</h3><p><MapPin size={14}/>Riverside Park · 12 min</p><div className="feature-actions"><button className="small-gold" onClick={()=>next('opportunities')}>View plan</button><AIChip>Prep tips</AIChip></div></div></div><div className="compass-card"><div className="compass-heading"><span><Sparkles size={18}/></span><h3>What shall we try this week?</h3><button onClick={()=>notify('Listening…')}><Mic size={19}/></button></div><div className="prompt-list"><button onClick={()=>next('opportunities')}>Something new nearby</button><button onClick={()=>next('pathways')}>With a friend</button><button onClick={()=>next('opportunities')}>Free this week</button></div></div><h3 className="section-title quick-title">Your next chapter</h3><div className="quick-links">{[[Compass,'Pathways','pathways'],[CalendarDays,'My plan','plan'],[MessageCircle,'Messages','inbox'],[HelpCircle,'Help','home']].map(([Icon,label,target])=><button key={label as string} onClick={()=>next(target as Screen)}><span><Icon size={20}/></span><small>{label as string}</small></button>)}</div></div><Nav go={next}/><HomeIndicator/></>}
-function Pathways({next,saved,setSaved}:{next:(s:Screen)=>void,saved:boolean,setSaved:(b:boolean)=>void}){return <><div className="mobile-scroll main-content"><div className="page-header"><div><small>YOUR NEXT CHAPTER</small><h2>Your pathways</h2></div><button className="round-button"><Search size={18}/></button></div><p className="intro-copy">Small steps can open up new possibilities.</p><div className="tabs"><button className="active">For you</button><button>Saved {saved?'· 1':''}</button><button>Explore</button></div><div className="pathway-hero"><div className="people-photo"><span>LEARN · CONNECT · GROW</span></div><div className="pathway-body"><div className="tag-row"><span className="green-tag">A GOOD FIT</span><span className="cream-tag">Community</span></div><h3>Community Garden Workshop</h3><p>Try something new, meet your neighbours, and share a little growing wisdom.</p><div className="pathway-meta"><span><MapPin size={14}/> 12 min away</span><span><Clock3 size={14}/> 2 hours</span></div><div className="pathway-actions"><button className="small-gold" onClick={()=>next('opportunities')}>View details</button><button className={`save-button ${saved?'saved':''}`} onClick={()=>setSaved(!saved)}><Heart size={17} fill={saved?'currentColor':'none'}/></button></div></div></div><h3 className="section-title">More to explore</h3><div className="simple-row" onClick={()=>next('opportunities')}><span className="row-icon pale-green"><BookOpen size={19}/></span><span><b>Digital Skills Basics</b><small>Learn at your own pace · Queenstown</small></span><ChevronRight size={17}/></div><div className="simple-row" onClick={()=>next('opportunities')}><span className="row-icon pale-pink"><Users size={19}/></span><span><b>Weekend Garden Club</b><small>Make, grow, and connect</small></span><ChevronRight size={17}/></div></div><Nav active="Explore" go={next}/><HomeIndicator/></>}
-function Opportunities({next,saved,setSaved}:{next:(s:Screen)=>void,saved:boolean,setSaved:(b:boolean)=>void}){return <><div className="mobile-scroll main-content"><div className="page-header"><div><small>MADE FOR YOU</small><h2>Opportunity hub</h2></div><button className="round-button"><Search size={18}/></button></div><div className="search-box"><Search size={16}/><span>Search activities, courses…</span><button><ChevronDown size={15}/></button></div><div className="filter-row"><button className="active">All options</button><button>Nearby</button><button>This week</button><button>Free</button></div><div className="ai-summary"><span><Sparkles size={17}/></span><div><b>A thoughtful place to begin</b><p>These options connect with your interest in community and your preference for gentle, local activities.</p></div></div><div className="result-heading"><b>Recommended for you</b><small>3 options</small></div><OpportunityCard title="Community Garden Workshop" subtitle="Riverside Park · 12 min" tag="Strong match" img="garden" saved={saved} setSaved={setSaved} onClick={()=>next('match')}/><OpportunityCard title="Digital Skills Basics" subtitle="Queenstown Library · 8 min" tag="Build confidence" img="skills" saved={false} setSaved={()=>{}} onClick={()=>next('match')}/><OpportunityCard title="Community Walking Group" subtitle="Every Tuesday · 10 AM" tag="Meet people" img="walking" saved={false} setSaved={()=>{}} onClick={()=>next('match')}/><button className="no-match-link" onClick={()=>next('no-match')}>Not seeing the right fit? <span>Explore partial matches <ChevronRight size={14}/></span></button></div><Nav active="Explore" go={next}/><HomeIndicator/></>}
-function OpportunityCard({title,subtitle,tag,img,saved,setSaved,onClick}:{title:string,subtitle:string,tag:string,img:string,saved:boolean,setSaved:(v:boolean)=>void,onClick:()=>void}){return <div className="opportunity-card"><button className={`card-photo ${img}`} onClick={onClick} aria-label={title}><span>{img==='garden'?'GROW TOGETHER':img==='skills'?'LEARN SOMETHING NEW':'WALK TOGETHER'}</span></button><div className="opportunity-copy"><span className="green-tag">{tag}</span><button className="heart-button" onClick={()=>setSaved(!saved)}><Heart size={17} fill={saved?'currentColor':'none'}/></button><h3 onClick={onClick}>{title}</h3><p><MapPin size={13}/>{subtitle}</p><button className="detail-link" onClick={onClick}>View details <ChevronRight size={15}/></button></div></div>}
-function Match({next,notify}:{next:(s:Screen)=>void,notify:(s:string)=>void}){return <><div className="mobile-scroll main-content"><div className="page-header"><button className="icon-button" onClick={()=>next('opportunities')}><ArrowLeft size={20}/></button><h2>Your match</h2><button className="round-button"><X size={18}/></button></div><div className="match-banner"><span className="green-tag">A STRONG MATCH</span><h2>Community Garden Workshop</h2><p>A welcoming space to learn, connect, and grow at your own pace.</p><div className="match-photo garden-photo"><span>GROW TOGETHER</span></div></div><div className="match-facts"><span><MapPin size={16}/>Riverside Park · 12 min</span><span><CalendarDays size={16}/>Tue 16 Apr · 10 AM</span><span><Clock3 size={16}/>2 hours · Beginner friendly</span></div><div className="why-card"><span><Sparkles size={17}/></span><div><b>Why this feels right for you</b><p>You said community matters. This friendly group offers a chance to meet others and share what you already know.</p></div></div><Primary onClick={()=>next('first-step')}>Take the first step</Primary><Secondary onClick={()=>notify('Saved to My Next Chapter')}>Save for later</Secondary></div><Nav active="Explore" go={next}/><HomeIndicator/></>}
-function NoMatch({next,notify}:{next:(s:Screen)=>void,notify:(s:string)=>void}){return <><div className="mobile-scroll main-content"><div className="page-header"><button className="icon-button" onClick={()=>next('opportunities')}><ArrowLeft size={20}/></button><span/><button className="round-button"><X size={18}/></button></div><div className="empty-match"><div className="empty-search"><Search size={28}/><X size={15}/></div><h2>No strong match yet</h2><p>Based on what you told us</p></div><div className="why-card"><span><Sparkles size={17}/></span><p>2 options partly fit. Time or distance is the main difference.</p></div><div className="partial-card"><div className="partial-thumb skills-thumb"/><div><b>Digital Skills Basics</b><span className="cream-tag">◷　Partial · Time</span></div><ChevronRight size={17}/></div><div className="partial-card"><div className="partial-thumb garden-thumb"/><div><b>Weekend Garden Club</b><span className="cream-tag"><MapPin size={12}/>　Partial · Distance</span></div><ChevronRight size={17}/></div><Primary onClick={()=>next('needs')}>Adjust my preferences</Primary><div className="no-match-actions"><Secondary onClick={()=>next('opportunities')}>See partial</Secondary><button onClick={()=>notify('A support coordinator will be in touch')}><span>☎</span> Talk to a person</button></div></div><Nav active="Explore" go={next}/><HomeIndicator/></>}
-function FirstStep({next,notify}:{next:(s:Screen)=>void,notify:(s:string)=>void}){return <><div className="mobile-scroll main-content"><div className="page-header"><button className="icon-button" onClick={()=>next('match')}><ArrowLeft size={20}/></button><h2>Your first step</h2><button className="round-button" onClick={()=>notify('Compass is ready to help')}><Sparkles size={18}/></button></div><div className="trial-card"><div className="trial-image garden-photo"><span>GROW</span></div><div><small><CalendarDays size={13}/> Tue 16 Apr · 10 AM</small><b>Community Garden Workshop</b><button onClick={()=>notify('Choose a different time')}>Edit　 Change date</button></div></div><h3 className="section-title">Get ready</h3><div className="checklist">{[['Comfy shoes','♧'],['Water','◉'],['Main gate','⚑']].map(([t,i])=><button key={t} onClick={e=>e.currentTarget.classList.toggle('done')}><span>{i}<i><Check size={11}/></i></span><small>{t}</small></button>)}</div><div className="map-card"><div className="map-road"/><span className="map-point you">●</span><span className="map-point destination"><MapPin size={15}/></span><div className="map-label"><MapPin size={13}/>10 min · 0.8 km</div><button className="directions" onClick={()=>notify('Directions opened')}>Directions</button></div><div className="contact-card"><span className="contact-avatar">J</span><span><b>Jamie</b><small>Coordinator</small></span><button onClick={()=>notify('Calling Jamie…')}>☎</button><button onClick={()=>notify('Message Jamie')}>▢</button></div><Primary onClick={()=>next('plan')}>Confirm</Primary><Secondary onClick={()=>notify('Jamie will be in touch')}>Ask for help</Secondary></div><Nav active="Explore" go={next}/><HomeIndicator/></>}
-function Plan({next,activeTab,setActiveTab,notify}:{next:(s:Screen)=>void,activeTab:string,setActiveTab:(s:string)=>void,notify:(s:string)=>void}){
-  const stats:{icon:typeof CalendarDays;value:string;label:string}[]=[{icon:CalendarDays,value:'2',label:'Upcoming'},{icon:Heart,value:'5',label:'Saved'},{icon:Clock3,value:'1',label:'Waiting reply'},{icon:Users,value:'3',label:'Support team'}]
-  return <><div className="mobile-scroll main-content"><div className="page-header"><h2>My Next Chapter</h2><div className="mini-avatar photo-avatar"><img src="/assets/figma-photo-02.jpeg" alt=""/></div></div><div className="tabs plan-tabs">{['Overview','Calendar','Goals'].map(t=><button key={t} className={activeTab===t?'active':''} onClick={()=>setActiveTab(t)}>{t}</button>)}</div><div className="progress-card"><div className="friends-photo"><span>GOOD THINGS GROW</span></div><div className="progress-copy"><b>Feeling more confident</b><strong>50%</strong><div className="progress-track"><i/></div></div></div><div className="stats-grid">{stats.map(({icon:Icon,value,label})=><button key={label} onClick={()=>notify(`${value} ${label}`)}><span><Icon size={19}/></span><b>{value}</b><small>{label}</small></button>)}</div><div className="feedback"><span>Was this helpful?</span><button onClick={()=>notify('Thanks for your feedback')}>👍</button><button onClick={()=>notify('Thanks for your feedback')}>👎</button></div><button className="compass-cta" onClick={()=>notify('Compass is ready to help')}><Sparkles size={16}/> Update my plan with Compass</button></div><Nav active="Profile" go={next}/><HomeIndicator/></>}
-
-function Inbox({next}:{next:(s:Screen)=>void}) {
-  const [read, setRead] = useState(false)
-  const openChapter = () => { setRead(true); next('pathways') }
-  const notes: { id: string; tone: 'forest' | 'gold'; icon: typeof Compass; title: string; body: string; go: Screen }[] = [
-    { id: 'chapter', tone: 'forest', icon: Compass, title: 'New: A pathway is ready', body: 'Explore now to continue your journey.', go: 'pathways' },
-    { id: 'update', tone: 'forest', icon: ArrowUp, title: 'Plan updated', body: 'Weekday mornings near Queenstown are saved on your plan.', go: 'profile' },
-    { id: 'friend', tone: 'gold', icon: Users, title: 'Friend request', body: 'Jamie invited you to try the garden workshop together.', go: 'first-step' },
-    { id: 'achievement', tone: 'gold', icon: Trophy, title: 'A small step unlocked', body: 'You saved your first activity. That is a good place to begin.', go: 'plan' },
-  ]
-  return <><div className="mobile-scroll main-content inbox-screen">
-    <div className="page-header"><div><small>FOR YOU</small><h2>Inbox</h2></div></div>
-    <div className="inbox-list">
-      {notes.map(note => {
-        const Icon = note.icon
-        const unread = note.id === 'chapter' && !read
-        return <article key={note.id} className={`inbox-card${unread ? ' unread' : ''}`}>
-          <button className="inbox-open" onClick={() => note.id === 'chapter' ? openChapter() : next(note.go)}>
-            <span className={`inbox-icon ${note.tone}`}><Icon size={18}/></span>
-            <span className="inbox-copy"><h3>{note.title}</h3><p>{note.body}</p><span className="inbox-foot"><time>Just now</time></span></span>
+      {SCREEN_MAP.map((g) => (
+        <nav key={g.group} className="proto-group">
+          <h2>{g.group}</h2>
+          {g.items.map((i) => (
+            <NavLink key={i.to} to={i.to} end className={({ isActive }) => (isActive ? 'is-active' : '')}>
+              <span>{i.label}</span>
+              <small>{i.figma}</small>
+            </NavLink>
+          ))}
+        </nav>
+      ))}
+      <div className="proto-group">
+        <h2>Overlays</h2>
+        {OVERLAY_LINKS.map((o) => (
+          <button key={o.id} type="button" onClick={() => openOverlay(o.id)}>
+            {o.label}
           </button>
-          {unread && <button className="inbox-read" onClick={openChapter}>Read</button>}
-        </article>
-      })}
-    </div>
-  </div><Nav active="Inbox" go={next}/><HomeIndicator/></>
+        ))}
+      </div>
+      <p className="proto-note">Tip: on a phone the prototype fills the screen. Use the in-app buttons, tabs and top bar to move around — they follow the Figma prototype links.</p>
+    </aside>
+  );
 }
 
-export default App
+function Device() {
+  const { settings, closeOverlay } = useApp();
+  const loc = useLocation();
+  // Close any overlay when the route changes (overlays navigate before closing).
+  useEffect(() => closeOverlay(), [loc.pathname, closeOverlay]);
+  return (
+    <div className={`device ${settings.highContrast ? 'hc' : ''}`}>
+      <span className="device-island" aria-hidden />
+      <Routes>
+        <Route path={R.welcome} element={<Welcome />} />
+        <Route path={R.coachGuide} element={<Coach key="guided" guiding />} />
+        <Route path={R.coach} element={<Coach key="everyday" />} />
+        <Route path={R.strengths} element={<Strengths />} />
+        <Route path={R.possibilities} element={<Possibilities />} />
+        <Route path={R.fit} element={<Fit />} />
+        <Route path={R.discover} element={<Discover />} />
+        <Route path={R.roadmap} element={<Roadmap />} />
+        <Route path={R.community} element={<Community />} />
+        <Route path={R.myDay} element={<MyDay />} />
+        <Route path={R.me} element={<Me />} />
+        <Route path={R.messages} element={<Messages />} />
+        <Route path={R.joyySettings} element={<JoyySettings />} />
+        <Route path="*" element={<Welcome />} />
+      </Routes>
+      <OverlayHost />
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <HashRouter>
+      <AppProvider>
+        <div className="stage">
+          <PrototypeMap />
+          <Device />
+        </div>
+      </AppProvider>
+    </HashRouter>
+  );
+}
